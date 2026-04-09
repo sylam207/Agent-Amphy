@@ -16,7 +16,7 @@ const Navbar = () => {
   const {user} = useUser();
 
   return (
-    <header className="w-full fixed z-50 bg-[var(--bg-primary)] flex">
+    <header className="w-full fixed z-50 bg-(--bg-primary) flex">
       <div className="wrapper navbar-height py-4 flex justify-between items-center">
         <Link href="/" className="flex gap-0.5 items-center">
           <Image
@@ -28,7 +28,7 @@ const Navbar = () => {
           <span className="logo-text">Agent Amphy</span>
         </Link>
 
-        <nav className="w-fit flex gap-[1.875rem] items-center">
+        <nav className="w-fit flex gap-7.5 items-center">
           {navItems.map(({ label, href }) => {
             const isActive =
               pathName === href || (href !== "/" && pathName.startsWith(href));
@@ -46,7 +46,7 @@ const Navbar = () => {
             );
           })}
 
-          <div className="flex gap-[1.875rem] items-center">
+          <div className="flex gap-7.5 items-center">
           <Show when="signed-out">
             <SignInButton mode="modal" />
           </Show>
