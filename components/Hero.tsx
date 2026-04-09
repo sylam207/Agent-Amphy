@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Plus } from "lucide-react";
 
 export default function PokemonLibraryHero() {
@@ -19,10 +20,12 @@ export default function PokemonLibraryHero() {
               Listen, learn, and discuss your favorite reads.
             </p>
 
-            <button className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-[1.05rem] font-semibold text-[#3a2d20] shadow-[0_4px_14px_rgba(80,62,35,0.08)] transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(80,62,35,0.12)]">
-              <Plus className="h-5 w-5" />
-              Add new book
-            </button>
+            <Link href="/books/new">
+              <button className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-[1.05rem] font-semibold text-[#3a2d20] shadow-[0_4px_14px_rgba(80,62,35,0.08)] transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(80,62,35,0.12)]">
+                <Plus className="h-5 w-5" />
+                Add new book
+              </button>
+            </Link>
           </div>
 
           {/* Center */}

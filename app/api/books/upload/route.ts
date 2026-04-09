@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     // Capture the file ID from the stream
     const fileId = uploadStream.id;
 
-    return new Promise((resolve) => {
+    return new Promise<Response>((resolve) => {
       uploadStream.on("finish", () => {
         resolve(
           NextResponse.json({

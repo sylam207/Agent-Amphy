@@ -1,5 +1,5 @@
 // Sample books for the homepage (using Open Library covers)
-export const sampleBooks = [
+ export const sampleBooks = [
     {
         _id: '1',
         title: 'Clean Code',
@@ -80,7 +80,7 @@ export const sampleBooks = [
         coverURL: 'https://covers.openlibrary.org/b/isbn/9780451524935-L.jpg',
         coverColor: '#f8f4e9',
     },
-];
+]; 
 
 // File validation helpers
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
