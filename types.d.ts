@@ -16,10 +16,11 @@ export interface IBook extends Document {
     slug: string;
     author: string;
     persona?: string;
-    fileURL: string;
-    fileBlobKey: string;
-    coverURL: string;
-    coverBlobKey?: string;
+    fileBinaryId?: string; // GridFS file ID for PDF
+    fileBlobKey?: string; // Legacy: Vercel Blob key
+    coverImageBase64?: string; // Base64 encoded cover image (data URL)
+    coverURL?: string; // Legacy: Vercel Blob URL
+    coverBlobKey?: string; // Legacy: Vercel Blob key
     fileSize: number;
     totalSegments: number;
     createdAt: Date;
