@@ -733,6 +733,10 @@
   /* ===========================================
      BACK BUTTON (FLOATING)
      =========================================== */
+  .back-page-container {
+    @apply min-h-screen w-full bg-[var(--bg-page)] text-[var(--text-primary)];
+  }
+
   .back-btn-floating {
     @apply fixed top-24 left-6 z-50 size-12 rounded-full bg-white border border-[var(--border-subtle)] flex items-center justify-center transition-all;
     box-shadow: var(--shadow-soft);
