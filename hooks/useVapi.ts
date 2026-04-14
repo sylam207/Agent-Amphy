@@ -3,6 +3,7 @@ import { ASSISTANT_ID, DEFAULT_VOICE, VOICE_SETTINGS, voiceOptions } from "@/lib
 import { getVoice } from "@/lib/utils";
 import {IBook, Messages} from "@/types";
 import {useAuth} from "@clerk/nextjs";
+import { useUserPlan } from "@/lib/useUserPlan";
 import {useEffect, useRef, useState} from "react";
 import Vapi from '@vapi-ai/web';
 
@@ -25,14 +26,14 @@ function getVapi() {
         if (!VAPI_API_KEY) {
             throw new Error('VAPI API key is not set');
         }
-        vapi = new Vapi(VAPI_API_KEY);
+        vapi = new Vapi(VAPI_API_KEY, '/vapi-proxy');
     }
     return vapi;
 }
 
-
-export const useVapi = (book: IBook) => {
+const useVapi = (book: IBook) => {
     const {userId} = useAuth();
+    const plan = useUserPlan(); // You can use plan.maxSessionMinutes, etc. if needed
     const [status, setStatus] = useState<CallStatus>('idle');
     const [messages, setMessages] = useState<Messages[]>([]);
     const [currentMessage, setCurrentMessage] = useState('');
@@ -101,6 +102,35 @@ export const useVapi = (book: IBook) => {
         };
 
         const handleMessage = (message: any) => {
+            // Handle Vapi transcript messages
+            if (message.type === 'transcript') {
+                const role = message.role as 'user' | 'assistant';
+                const text = message.transcript || '';
+                if (!role || !text) return;
+
+                if (message.transcriptType === 'partial') {
+                    if (role === 'user') {
+                        setCurrentUserMessage(text);
+                        setStatus('listening');
+                    } else if (role === 'assistant') {
+                        setCurrentMessage(text);
+                        setStatus('speaking');
+                    }
+                } else if (message.transcriptType === 'final') {
+                    if (role === 'user') {
+                        setCurrentUserMessage('');
+                        setStatus('thinking');
+                        appendMessage({ role: 'user', content: text });
+                    } else if (role === 'assistant') {
+                        setCurrentMessage('');
+                        setStatus('listening');
+                        appendMessage({ role: 'assistant', content: text });
+                    }
+                }
+                return;
+            }
+
+            // Fallback for other message formats
             const payload = message?.message ? message.message : message;
             const role = getRole(message) || getRole(payload);
             const text = getText(payload?.content ?? payload?.transcript ?? payload?.text ?? payload?.message?.content);
@@ -207,7 +237,6 @@ export const useVapi = (book: IBook) => {
                 }
             })
 
-            // Add the first message to show in transcript
             setMessages([{ role: 'assistant', content: firstMessage }]);
         } catch (e) {
             console.error('Error starting call', e);
@@ -227,3 +256,5 @@ export const useVapi = (book: IBook) => {
         start, stop, clearErrors
     }
 }
+
+export default useVapi;

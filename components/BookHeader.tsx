@@ -2,6 +2,7 @@
 import { Mic, MicOff } from "lucide-react";
 import { IBook } from "@/types";
 import { CallStatus } from "@/hooks/useVapi";
+import { getVoice } from "@/lib/utils";
 
 interface BookHeaderProps {
   book: IBook;
@@ -13,7 +14,7 @@ interface BookHeaderProps {
 const BookHeader = ({ book, status, isActive, onToggleMic }: BookHeaderProps) => {
   const { title, author, coverURL, coverImageBase64, persona } = book;
   const coverSource = coverImageBase64 || coverURL || "";
-  const voiceName = persona ?? "Narrator";
+  const voiceName = getVoice(persona).name;
 
   const isSpeakingOrThinking = status === "speaking" || status === "thinking";
 

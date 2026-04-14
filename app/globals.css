@@ -392,13 +392,13 @@
      VAPI CONTROLS COMPONENT
      =========================================== */
   .vapi-header-card {
-    @apply flex items-center gap-6 bg-[#f3e4c7] rounded-[14px] p-6 relative overflow-hidden mt-10;
+    @apply flex items-center gap-6 bg-[#f3e4c7] rounded-[14px] p-6 pb-13 relative mt-10 shrink-0;
   }
   .vapi-compact-header {
     @apply flex items-center gap-2 bg-[#f3e4c7] rounded-[14px] p-3 mb-3;
   }
   .vapi-transcript-wrapper {
-    @apply min-h-[400px] max-h-[60vh] flex flex-col;
+    @apply flex flex-col;
   }
   .vapi-cover-wrapper {
     @apply relative shrink-0;

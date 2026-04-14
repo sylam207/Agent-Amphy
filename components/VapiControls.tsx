@@ -1,5 +1,5 @@
 "use client";
-import { useVapi } from "@/hooks/useVapi";
+import useVapi from "@/hooks/useVapi";
 import { IBook } from "@/types";
 import BookHeader from "@/components/BookHeader";
 import Transcript from "@/components/Transcript";

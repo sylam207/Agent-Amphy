@@ -10,12 +10,12 @@ import { voiceCategories, voiceOptions } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { createBook, saveBookSegments, checkBookExists, createBookWithMongoDBStorage } from "@/lib/actions/books.actions";
 import { useRouter } from "next/navigation";
+import { useUserPlan } from "@/lib/useUserPlan";
 
 interface UploadFormProps {
   clerkId: string;
   onSubmittingChange?: (submitting: boolean) => void;
 }
-
 // Helper function to safely convert large files to base64 without stack overflow
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -44,6 +44,8 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
     onSubmittingChange?.(submitting);
   };
 
+  const [planError, setPlanError] = useState<string | null>(null);
+  const plan = useUserPlan();
   const {
     register,
     handleSubmit,
@@ -250,7 +252,7 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
             <div className="voice-selector-options flex flex-wrap gap-3">
               {voices.map((voiceKey) => {
                 const voice = voiceOptions[voiceKey as keyof typeof voiceOptions];
-                const selected = selectedVoice === voice.name;
+                const selected = selectedVoice === voice.id;
                 return (
                   <label
                     key={voiceKey}
@@ -263,7 +265,7 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
                     <input
                       id={`voice-${voiceKey}`}
                       type="radio"
-                      value={voice.name}
+                      value={voice.id}
                       className="sr-only"
                       {...register("voice")}
                     />

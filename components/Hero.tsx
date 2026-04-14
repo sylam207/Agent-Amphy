@@ -12,12 +12,12 @@ export default function PokemonLibraryHero() {
           {/* Left */}
           <div className="w-full lg:max-w-90">
             <h1 className="font-serif text-[2.3rem] font-semibold leading-tight text-[#2d2218] md:text-[2.5rem]">
-              Your Library
+              The Pokédex 
             </h1>
 
             <p className="mt-4 max-w-105 text-[1rem] leading-7 text-[#6f665d]">
-              Convert your Pokémon books into interactive AI conversations.
-              Listen, learn, and discuss your favorite reads.
+              Every great Trainer studies before battle. Upload your books,
+              let AI break them down, and chat your way to mastery — one conversation at a time.
             </p>
 
             <Link href="/books/new">

@@ -8,8 +8,17 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: '100mb', // Allow up to 100MB for server actions
+      bodySizeLimit: '100mb',
     },
+    proxyClientMaxBodySize: '100mb',
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/vapi-proxy/:path*',
+        destination: 'https://api.vapi.ai/:path*',
+      },
+    ];
   },
 };
 

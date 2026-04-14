@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/database/mongoose";
 import { CreateBook, TextSegment } from "@/types";
 import { escapeRegex, generateSlug, serializeData } from "@/lib/utils";
 import Book from "@/database/models/book.model";
+import { getUserPlan } from "@/lib/getUserPlan";
 import BookSegment from "@/database/models/bookSegment.model";
 import mongoose from "mongoose";
 
@@ -30,10 +31,18 @@ export const checkBookExists = async (title: string) => {
   }
 };
 
+
 export const createBook = async (data: CreateBook) => {
   try {
     await connectToDatabase();
     const slug = generateSlug(data.title);
+
+    // Plan enforcement: book upload limit
+    const plan = await getUserPlan(data.clerkId);
+    const bookCount = await Book.countDocuments({ clerkId: data.clerkId });
+    if (bookCount >= plan.maxBooks) {
+      return { success: false, error: "Book limit reached for your plan." };
+    }
 
     const existingBook = await Book.findOne({ slug }).lean();
     if (existingBook) {
