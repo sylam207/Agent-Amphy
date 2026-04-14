@@ -101,8 +101,10 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
     if (!values.pdfFile || !parsedPdfData) return;
 
     updateSubmitting(true);
+    let step = "init";
     try {
       // Get cover image (either provided or generated from PDF)
+      step = "prepare-cover";
       let coverImageBase64: string;
       if (values.coverImage) {
         // Convert provided cover image to base64
@@ -113,11 +115,38 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         coverImageBase64 = parsedPdfData.cover;
       }
 
+      // Resize cover if it's too large (> 500KB as data URL)
+      if (coverImageBase64.length > 500_000) {
+        console.log(`Cover image is large (${(coverImageBase64.length / 1024).toFixed(0)}KB), resizing...`);
+        const img = new Image();
+        const loaded = new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("Failed to load cover for resize"));
+        });
+        img.src = coverImageBase64;
+        await loaded;
+        const canvas = document.createElement("canvas");
+        const MAX_DIM = 600;
+        const scale = Math.min(MAX_DIM / img.width, MAX_DIM / img.height, 1);
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          coverImageBase64 = canvas.toDataURL("image/jpeg", 0.7);
+        }
+        console.log(`Cover resized to ${(coverImageBase64.length / 1024).toFixed(0)}KB`);
+      }
+
       // Upload PDF via chunked server actions (bypasses Vercel 4.5MB request limit)
+      step = "read-pdf";
       const pdfBase64 = await fileToBase64(values.pdfFile);
-      const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks of base64
+      console.log(`PDF base64 size: ${(pdfBase64.length / 1024 / 1024).toFixed(2)}MB`);
+
+      const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB chunks (safe for Vercel 4.5MB limit)
       const totalChunks = Math.ceil(pdfBase64.length / CHUNK_SIZE);
 
+      step = "start-upload";
       const startResult = await startChunkedUpload(values.pdfFile.name, totalChunks);
       if (!startResult.success || !startResult.uploadId) {
         throw new Error(startResult.error || "Failed to start upload");
@@ -125,6 +154,7 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
       const { uploadId } = startResult;
 
       for (let i = 0; i < totalChunks; i++) {
+        step = `upload-chunk-${i + 1}/${totalChunks}`;
         const chunk = pdfBase64.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
         const chunkResult = await uploadChunk(uploadId, i, chunk);
         if (!chunkResult.success) {
@@ -132,6 +162,7 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         }
       }
 
+      step = "complete-upload";
       const uploadResult = await completeChunkedUpload(uploadId);
       if (!uploadResult.success || !uploadResult.data) {
         throw new Error(uploadResult.error || "Failed to complete upload");
@@ -140,8 +171,7 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
       const { pdfFileId } = uploadResult.data;
 
       // Create book in database with MongoDB storage
-      // Map selected voice name to voice ID
-      // persona is now the selected voice ID
+      step = "create-book";
       const bookData = {
         clerkId,
         title: values.title,
@@ -151,6 +181,7 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         coverImageBase64,
         fileSize: values.pdfFile.size,
       };
+      console.log(`createBook payload size: ~${(JSON.stringify(bookData).length / 1024).toFixed(0)}KB`);
 
       const bookResult = await createBookWithMongoDBStorage(bookData);
 
@@ -162,6 +193,10 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
       }
 
       // Save book segments
+      step = "save-segments";
+      const segmentsPayload = JSON.stringify(parsedPdfData.content);
+      console.log(`saveSegments payload size: ~${(segmentsPayload.length / 1024).toFixed(0)}KB, segments: ${parsedPdfData.content.length}`);
+
       const segmentsResult = await saveBookSegments(
         bookResult.data._id,
         clerkId,
@@ -175,9 +210,11 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
       // Redirect to book page
       router.push(`/books/${bookResult.data.slug}`);
 
-    } catch (error) {
-      console.error("Error creating book:", error);
-      alert(error instanceof Error ? error.message : "An error occurred while creating the book");
+    } catch (error: any) {
+      console.error(`Error at step [${step}]:`, error);
+      const digest = error?.digest ? ` (digest: ${error.digest})` : "";
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      alert(`Failed at step: ${step}\n${msg}${digest}`);
     } finally {
       updateSubmitting(false);
     }

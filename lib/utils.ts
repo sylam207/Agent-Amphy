@@ -110,7 +110,7 @@ export async function parsePDFFile(file: File) {
 
     // Render first page as cover image
     const firstPage = await pdfDocument.getPage(1);
-    const viewport = firstPage.getViewport({ scale: 2 }); // 2x scale for better quality
+    const viewport = firstPage.getViewport({ scale: 1 }); // 1x scale (sufficient for cover thumbnail)
 
     const canvas = document.createElement('canvas');
     canvas.width = viewport.width;
