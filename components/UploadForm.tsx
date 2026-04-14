@@ -8,7 +8,7 @@ import { newBookFormSchema, type NewBookFormValues } from "@/lib/zod";
 import { FileUploader } from "./FileUploader";
 import { voiceCategories, voiceOptions } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { createBook, saveBookSegments, checkBookExists, createBookWithMongoDBStorage, uploadPdfToDatabase } from "@/lib/actions/books.actions";
+import { createBook, saveBookSegments, checkBookExists, createBookWithMongoDBStorage, startChunkedUpload, uploadChunk, completeChunkedUpload } from "@/lib/actions/books.actions";
 import { useRouter } from "next/navigation";
 import { useUserPlan } from "@/lib/useUserPlan";
 
@@ -113,12 +113,28 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         coverImageBase64 = parsedPdfData.cover;
       }
 
-      // Upload PDF to MongoDB GridFS via server action (bypasses Vercel 4.5MB API route limit)
+      // Upload PDF via chunked server actions (bypasses Vercel 4.5MB request limit)
       const pdfBase64 = await fileToBase64(values.pdfFile);
-      const uploadResult = await uploadPdfToDatabase(pdfBase64, values.pdfFile.name, coverImageBase64);
+      const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks of base64
+      const totalChunks = Math.ceil(pdfBase64.length / CHUNK_SIZE);
 
+      const startResult = await startChunkedUpload(values.pdfFile.name, totalChunks);
+      if (!startResult.success || !startResult.uploadId) {
+        throw new Error(startResult.error || "Failed to start upload");
+      }
+      const { uploadId } = startResult;
+
+      for (let i = 0; i < totalChunks; i++) {
+        const chunk = pdfBase64.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+        const chunkResult = await uploadChunk(uploadId, i, chunk);
+        if (!chunkResult.success) {
+          throw new Error(chunkResult.error || `Failed to upload chunk ${i + 1}/${totalChunks}`);
+        }
+      }
+
+      const uploadResult = await completeChunkedUpload(uploadId, coverImageBase64);
       if (!uploadResult.success || !uploadResult.data) {
-        throw new Error(uploadResult.error || "Failed to upload PDF");
+        throw new Error(uploadResult.error || "Failed to complete upload");
       }
 
       const { pdfFileId } = uploadResult.data;

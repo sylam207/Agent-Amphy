@@ -355,3 +355,139 @@ export const searchBookSegments = async (bookId: string, query: string, limit: n
         };
     }
 };
+
+// --- Chunked Upload (bypasses Vercel 4.5MB request limit) ---
+
+const UPLOAD_CHUNKS_COLLECTION = 'uploadChunks';
+
+export const startChunkedUpload = async (
+  filename: string,
+  totalChunks: number
+): Promise<{ success: boolean; uploadId?: string; error?: string }> => {
+  try {
+    await connectToDatabase();
+    const db = mongoose.connection.db;
+    if (!db) throw new Error("Database connection not established");
+
+    const uploadId = new mongoose.Types.ObjectId().toString();
+    await db.collection(UPLOAD_CHUNKS_COLLECTION).insertOne({
+      uploadId,
+      filename,
+      totalChunks,
+      receivedChunks: 0,
+      createdAt: new Date(),
+    });
+
+    return { success: true, uploadId };
+  } catch (error) {
+    console.error("Error starting chunked upload:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to start upload" };
+  }
+};
+
+export const uploadChunk = async (
+  uploadId: string,
+  chunkIndex: number,
+  base64Chunk: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    await connectToDatabase();
+    const db = mongoose.connection.db;
+    if (!db) throw new Error("Database connection not established");
+
+    const col = db.collection(UPLOAD_CHUNKS_COLLECTION);
+
+    // Store the chunk
+    await col.insertOne({
+      uploadId,
+      chunkIndex,
+      data: base64Chunk,
+      createdAt: new Date(),
+    });
+
+    // Increment received count on the session doc
+    await col.updateOne(
+      { uploadId, totalChunks: { $exists: true } },
+      { $inc: { receivedChunks: 1 } }
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error uploading chunk:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Failed to upload chunk" };
+  }
+};
+
+export const completeChunkedUpload = async (
+  uploadId: string,
+  coverImageBase64: string
+): Promise<{
+  success: boolean;
+  data?: { pdfFileId: string; coverImageBase64: string };
+  error?: string;
+}> => {
+  try {
+    await connectToDatabase();
+    const db = mongoose.connection.db;
+    if (!db) throw new Error("Database connection not established");
+
+    const col = db.collection(UPLOAD_CHUNKS_COLLECTION);
+
+    // Get session doc
+    const session = await col.findOne({ uploadId, totalChunks: { $exists: true } });
+    if (!session) throw new Error("Upload session not found");
+
+    // Get all chunks in order
+    const chunks = await col
+      .find({ uploadId, chunkIndex: { $exists: true } })
+      .sort({ chunkIndex: 1 })
+      .toArray();
+
+    if (chunks.length !== session.totalChunks) {
+      throw new Error(`Expected ${session.totalChunks} chunks but got ${chunks.length}`);
+    }
+
+    // Reassemble the base64 string and convert to buffer
+    const fullBase64 = chunks.map((c) => c.data).join('');
+    const pdfBuffer = Buffer.from(fullBase64, 'base64');
+
+    // Upload to GridFS
+    const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: "pdfs" });
+    const uploadStream = bucket.openUploadStream(
+      `${Date.now()}-${session.filename}`,
+      { metadata: { uploadedAt: new Date() } }
+    );
+    const fileId = uploadStream.id;
+
+    const result = await new Promise<{
+      success: boolean;
+      data?: { pdfFileId: string; coverImageBase64: string };
+      error?: string;
+    }>((resolve, reject) => {
+      uploadStream.on("finish", () => {
+        resolve({
+          success: true,
+          data: { pdfFileId: String(fileId), coverImageBase64 },
+        });
+      });
+      uploadStream.on("error", (err: unknown) => reject(err));
+      uploadStream.end(pdfBuffer);
+    });
+
+    // Clean up temp chunks
+    await col.deleteMany({ uploadId });
+
+    return result;
+  } catch (error) {
+    console.error("Error completing chunked upload:", error);
+    // Attempt cleanup
+    try {
+      const db = mongoose.connection.db;
+      if (db) await db.collection(UPLOAD_CHUNKS_COLLECTION).deleteMany({ uploadId });
+    } catch { /* ignore cleanup errors */ }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to complete upload",
+    };
+  }
+};
