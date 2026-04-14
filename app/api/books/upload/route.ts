@@ -8,13 +8,13 @@ export const maxDuration = 300;
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const pdfBase64 = formData.get('pdfBase64') as string;
+    const pdfFile = formData.get('pdfFile') as File | null;
     const filename = formData.get('filename') as string;
     const coverImageBase64 = formData.get('coverImageBase64') as string;
 
-    if (!pdfBase64 || !filename) {
+    if (!pdfFile || !filename) {
       return NextResponse.json(
-        { error: "Missing required fields: pdfBase64, filename" },
+        { error: "Missing required fields: pdfFile, filename" },
         { status: 400 }
       );
     }
@@ -34,8 +34,9 @@ export async function POST(req: NextRequest) {
       bucketName: "pdfs",
     });
 
-    // Convert base64 to Buffer
-    const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+    // Convert File to Buffer
+    const arrayBuffer = await pdfFile.arrayBuffer();
+    const pdfBuffer = Buffer.from(arrayBuffer);
 
     // Upload PDF file
     const uploadStream = bucket.openUploadStream(`${Date.now()}-${filename}`, {

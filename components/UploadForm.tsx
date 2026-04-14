@@ -102,9 +102,6 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
 
     updateSubmitting(true);
     try {
-      // Convert PDF file to base64 using FileReader (handles large files safely)
-      const pdfBase64 = await fileToBase64(values.pdfFile);
-
       // Get cover image (either provided or generated from PDF)
       let coverImageBase64: string;
       if (values.coverImage) {
@@ -116,9 +113,9 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         coverImageBase64 = parsedPdfData.cover;
       }
 
-      // Upload PDF to MongoDB GridFS via API route
+      // Upload PDF to MongoDB GridFS via API route (send raw file, not base64)
       const formData = new FormData();
-      formData.append('pdfBase64', pdfBase64);
+      formData.append('pdfFile', values.pdfFile);
       formData.append('filename', values.pdfFile.name);
       formData.append('coverImageBase64', coverImageBase64);
 
