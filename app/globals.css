@@ -392,7 +392,7 @@
      VAPI CONTROLS COMPONENT
      =========================================== */
   .vapi-header-card {
-    @apply flex items-center gap-6 bg-[#f3e4c7] rounded-[14px] p-6 relative overflow-hidden;
+    @apply flex items-center gap-6 bg-[#f3e4c7] rounded-[14px] p-6 relative overflow-hidden mt-10;
   }
   .vapi-compact-header {
     @apply flex items-center gap-2 bg-[#f3e4c7] rounded-[14px] p-3 mb-3;
@@ -407,8 +407,10 @@
     @apply hidden;
   }
   .vapi-cover-image {
-    @apply relative w-[130px] h-[195px] sm:w-[162px] sm:h-[240px] rounded-lg object-cover;
+    @apply relative w-[130px] h-[195px] sm:w-[162px] sm:h-[240px] rounded-lg;
+    object-fit: contain;
     box-shadow: 0px 10px 30px 0px rgba(0, 0, 0, 0.1);
+    background: #fff;
   }
   .vapi-mic-wrapper {
     @apply absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2;
