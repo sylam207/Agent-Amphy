@@ -8,7 +8,7 @@ import { newBookFormSchema, type NewBookFormValues } from "@/lib/zod";
 import { FileUploader } from "./FileUploader";
 import { voiceCategories, voiceOptions } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { createBook, saveBookSegments, checkBookExists, createBookWithMongoDBStorage } from "@/lib/actions/books.actions";
+import { createBook, saveBookSegments, checkBookExists, createBookWithMongoDBStorage, uploadPdfToDatabase } from "@/lib/actions/books.actions";
 import { useRouter } from "next/navigation";
 import { useUserPlan } from "@/lib/useUserPlan";
 
@@ -113,25 +113,11 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         coverImageBase64 = parsedPdfData.cover;
       }
 
-      // Upload PDF to MongoDB GridFS via API route (send raw file, not base64)
-      const formData = new FormData();
-      formData.append('pdfFile', values.pdfFile);
-      formData.append('filename', values.pdfFile.name);
-      formData.append('coverImageBase64', coverImageBase64);
+      // Upload PDF to MongoDB GridFS via server action (bypasses Vercel 4.5MB API route limit)
+      const pdfBase64 = await fileToBase64(values.pdfFile);
+      const uploadResult = await uploadPdfToDatabase(pdfBase64, values.pdfFile.name, coverImageBase64);
 
-      const uploadResponse = await fetch('/api/books/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        throw new Error(errorData.error || "Failed to upload PDF");
-      }
-
-      const uploadResult = await uploadResponse.json();
-
-      if (!uploadResult.success && uploadResult.data) {
+      if (!uploadResult.success || !uploadResult.data) {
         throw new Error(uploadResult.error || "Failed to upload PDF");
       }
 
