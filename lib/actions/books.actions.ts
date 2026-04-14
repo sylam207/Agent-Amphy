@@ -58,6 +58,25 @@ export const createBook = async (data: CreateBook) => {
   }
 };
 
+export const deleteBookById = async (id: string) => {
+  try {
+    await connectToDatabase();
+    const deletedBook = await Book.findByIdAndDelete(id);
+    await BookSegment.deleteMany({ bookId: id });
+    return {
+      success: !!deletedBook,
+      data: deletedBook ? serializeData(deletedBook) : null,
+    };
+  } catch (e) {
+    console.error("[deleteBookById] Error:", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Unknown error occurred",
+    };
+  }
+};
+
+
 export const saveBookSegments = async (
   bookId: string,
   clerkId: string,

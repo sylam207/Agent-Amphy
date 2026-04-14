@@ -1,5 +1,6 @@
 import { startVoiceSession } from "@/lib/actions/session.actions";
-import { ASSISTANT_ID, DEFAULT_VOICE } from "@/lib/constants";
+import { ASSISTANT_ID, DEFAULT_VOICE, VOICE_SETTINGS, voiceOptions } from "@/lib/constants";
+import { getVoice } from "@/lib/utils";
 import {IBook, Messages} from "@/types";
 import {useAuth} from "@clerk/nextjs";
 import {useEffect, useRef, useState} from "react";
@@ -47,7 +48,8 @@ export const useVapi = (book: IBook) => {
 
     const BookRef = useLatestRef(book);
     const durationRef = useLatestRef(duration);
-    const voice = book.persona || DEFAULT_VOICE;
+
+    let voice = book.persona || voiceOptions[DEFAULT_VOICE]?.id || DEFAULT_VOICE;
 
     const isActive = status === 'listening' || status === 'thinking' || status === 'speaking' || status === 'starting';
     
@@ -136,11 +138,25 @@ export const useVapi = (book: IBook) => {
             }, 1000);
         };
         
-        const handleCallEnd = () => {
+        const handleCallEnd = (event?: any) => {
             setStatus('idle');
             if (startTimerRef.current) {
                 clearInterval(startTimerRef.current);
                 startTimerRef.current = null;
+            }
+
+            // Only show error for unexpected reasons
+            if (event && event.reason) {
+                if (event.reason === 'Meeting has ended' || event.reason === 'ejection') {
+                    // Normal session end, do not set error
+                    setLimitError(null);
+                } else {
+                    setLimitError(`Session ended: ${event.reason}`);
+                }
+            } else if (event && event.error) {
+                setLimitError(`Session error: ${event.error}`);
+            } else {
+                setLimitError(null);
             }
         };
         
@@ -180,7 +196,15 @@ export const useVapi = (book: IBook) => {
                 variableValues: {
                     title: book.title, author: book.author, voice, bookId: book._id.toString()
                 },
-                
+                voice: {
+                    provider: '11labs' as const,
+                    voiceId: getVoice(voice).id,
+                    model: "eleven_turbo_v2_5" as const,
+                    stability: VOICE_SETTINGS.stability,
+                    similarityBoost: VOICE_SETTINGS.similarityBoost,
+                    style: VOICE_SETTINGS.style,
+                    useSpeakerBoost: VOICE_SETTINGS.useSpeakerBoost,
+                }
             })
 
             // Add the first message to show in transcript

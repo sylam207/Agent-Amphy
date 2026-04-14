@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-const assistantVoices = ["Dave", "Daniel", "Chris", "Rachel", "Sarah"] as const;
 const optionalFile = z.instanceof(File).optional();
 
 export const newBookFormSchema = z.object({
@@ -19,7 +18,7 @@ export const newBookFormSchema = z.object({
   }),
   title: z.string().trim().min(1, "Title is required."),
   author: z.string().trim().min(1, "Author name is required."),
-  voice: z.enum(assistantVoices),
+  voice: z.string(), // Accept any string (voice ID)
 });
 
 export type NewBookFormValues = {
@@ -27,6 +26,5 @@ export type NewBookFormValues = {
   coverImage?: File;
   title: string;
   author: string;
-  voice: (typeof assistantVoices)[number];
+  voice: string; // Now string, not enum
 };
-export type AssistantVoice = (typeof assistantVoices)[number];

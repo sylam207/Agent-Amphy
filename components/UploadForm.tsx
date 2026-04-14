@@ -22,7 +22,6 @@ const fileToBase64 = (file: File): Promise<string> => {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // Remove data URL prefix if present and just get the base64 part
       const base64 = result.includes(',') ? result.split(',')[1] : result;
       resolve(base64);
     };
@@ -58,7 +57,7 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
       coverImage: undefined,
       title: "",
       author: "",
-      voice: "Rachel",
+      voice: voiceOptions.rachel.id,
     },
     mode: "onTouched",
   });
@@ -140,6 +139,8 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
       const { pdfFileId } = uploadResult.data;
 
       // Create book in database with MongoDB storage
+      // Map selected voice name to voice ID
+      // persona is now the selected voice ID
       const bookData = {
         clerkId,
         title: values.title,
