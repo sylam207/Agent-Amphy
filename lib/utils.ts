@@ -127,8 +127,8 @@ export async function parsePDFFile(file: File) {
       canvas: canvas,
     }).promise;
 
-    // Convert canvas to data URL
-    const coverDataURL = canvas.toDataURL('image/png');
+    // Convert canvas to compressed JPEG data URL (PNG can be 3-5MB, JPEG ~100-300KB)
+    const coverDataURL = canvas.toDataURL('image/jpeg', 0.75);
 
     // Extract text from all pages
     let fullText = '';

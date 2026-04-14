@@ -132,7 +132,7 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         }
       }
 
-      const uploadResult = await completeChunkedUpload(uploadId, coverImageBase64);
+      const uploadResult = await completeChunkedUpload(uploadId);
       if (!uploadResult.success || !uploadResult.data) {
         throw new Error(uploadResult.error || "Failed to complete upload");
       }

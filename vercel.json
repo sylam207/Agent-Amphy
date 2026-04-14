@@ -1,7 +1,10 @@
 {
   "functions": {
-    "app/api/**/*.ts": {
-      "maxDuration": 300
+    "app/**/*.ts": {
+      "maxDuration": 60
+    },
+    "app/**/*.tsx": {
+      "maxDuration": 60
     }
   },
   "regions": ["iad1"]

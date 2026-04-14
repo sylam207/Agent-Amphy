@@ -419,11 +419,10 @@ export const uploadChunk = async (
 };
 
 export const completeChunkedUpload = async (
-  uploadId: string,
-  coverImageBase64: string
+  uploadId: string
 ): Promise<{
   success: boolean;
-  data?: { pdfFileId: string; coverImageBase64: string };
+  data?: { pdfFileId: string };
   error?: string;
 }> => {
   try {
@@ -461,13 +460,13 @@ export const completeChunkedUpload = async (
 
     const result = await new Promise<{
       success: boolean;
-      data?: { pdfFileId: string; coverImageBase64: string };
+      data?: { pdfFileId: string };
       error?: string;
     }>((resolve, reject) => {
       uploadStream.on("finish", () => {
         resolve({
           success: true,
-          data: { pdfFileId: String(fileId), coverImageBase64 },
+          data: { pdfFileId: String(fileId) },
         });
       });
       uploadStream.on("error", (err: unknown) => reject(err));
