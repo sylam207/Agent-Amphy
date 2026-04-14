@@ -8,7 +8,7 @@ import { newBookFormSchema, type NewBookFormValues } from "@/lib/zod";
 import { FileUploader } from "./FileUploader";
 import { voiceCategories, voiceOptions } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { createBook, saveBookSegments, checkBookExists, createBookWithMongoDBStorage, startChunkedUpload, uploadChunk, completeChunkedUpload } from "@/lib/actions/books.actions";
+import { createBook, saveBookSegments, checkBookExists, createBookWithMongoDBStorage } from "@/lib/actions/books.actions";
 import { useRouter } from "next/navigation";
 import { useUserPlan } from "@/lib/useUserPlan";
 
@@ -138,16 +138,21 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         console.log(`Cover resized to ${(coverImageBase64.length / 1024).toFixed(0)}KB`);
       }
 
-      // Upload PDF via chunked server actions (bypasses Vercel 4.5MB request limit)
+      // Upload PDF via chunked API route (avoids RSC serialization limits)
       step = "read-pdf";
       const pdfBase64 = await fileToBase64(values.pdfFile);
       console.log(`PDF base64 size: ${(pdfBase64.length / 1024 / 1024).toFixed(2)}MB`);
 
-      const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB chunks (safe for Vercel 4.5MB limit)
+      const CHUNK_SIZE = 3 * 1024 * 1024; // 3MB base64 chunks (~4MB JSON, under Vercel 4.5MB limit)
       const totalChunks = Math.ceil(pdfBase64.length / CHUNK_SIZE);
 
       step = "start-upload";
-      const startResult = await startChunkedUpload(values.pdfFile.name, totalChunks);
+      const startRes = await fetch("/api/books/chunked-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start", filename: values.pdfFile.name, totalChunks }),
+      });
+      const startResult = await startRes.json();
       if (!startResult.success || !startResult.uploadId) {
         throw new Error(startResult.error || "Failed to start upload");
       }
@@ -156,14 +161,24 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
       for (let i = 0; i < totalChunks; i++) {
         step = `upload-chunk-${i + 1}/${totalChunks}`;
         const chunk = pdfBase64.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-        const chunkResult = await uploadChunk(uploadId, i, chunk);
+        const chunkRes = await fetch("/api/books/chunked-upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "chunk", uploadId, chunkIndex: i, data: chunk }),
+        });
+        const chunkResult = await chunkRes.json();
         if (!chunkResult.success) {
           throw new Error(chunkResult.error || `Failed to upload chunk ${i + 1}/${totalChunks}`);
         }
       }
 
       step = "complete-upload";
-      const uploadResult = await completeChunkedUpload(uploadId);
+      const completeRes = await fetch("/api/books/chunked-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "complete", uploadId }),
+      });
+      const uploadResult = await completeRes.json();
       if (!uploadResult.success || !uploadResult.data) {
         throw new Error(uploadResult.error || "Failed to complete upload");
       }
