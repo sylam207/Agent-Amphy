@@ -49,6 +49,9 @@ const useVapi = (book: IBook) => {
 
     const BookRef = useLatestRef(book);
     const durationRef = useLatestRef(duration);
+    const statusRef = useLatestRef(status);
+
+    const maxSeconds = plan.maxSessionMinutes * 60;
 
     let voice = book.persona || voiceOptions[DEFAULT_VOICE]?.id || DEFAULT_VOICE;
 
@@ -249,10 +252,19 @@ const useVapi = (book: IBook) => {
         await getVapi().stop();
         isStoppingRef.current = false;
     }
+
+    // Auto-stop when time limit is reached
+    useEffect(() => {
+        if (duration >= maxSeconds && isActive) {
+            setLimitError(`Session time limit reached (${plan.maxSessionMinutes} minutes). Upgrade your plan for longer sessions.`);
+            getVapi().stop();
+        }
+    }, [duration, maxSeconds, isActive, plan.maxSessionMinutes]);
     const clearErrors = async() => {}
 
     return {
         status, isActive, messages, currentMessage, currentUserMessage, duration,
+        maxSeconds, limitError,
         start, stop, clearErrors
     }
 }

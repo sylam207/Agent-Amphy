@@ -114,55 +114,19 @@ export default function PokemonLibraryHero() {
 
           {/* Right */}
           <div className="w-full lg:w-1/4">
-            <div className="mx-auto w-full max-w-75 rounded-3xl bg-white px-5 py-5 shadow-[0_8px_24px_rgba(90,70,40,0.08)]">
-              <div className="space-y-5">
-                <StepItem
-                  number="1"
-                  title="Upload PDF"
-                  description="Add your book file"
-                />
-                <StepItem
-                  number="2"
-                  title="AI Processing"
-                  description="We analyze the content"
-                />
-                <StepItem
-                  number="3"
-                  title="Voice Chat"
-                  description="Discuss with AI"
-                />
-              </div>
+            <div className="mx-auto w-full max-w-75 rounded-3xl bg-white px-6 py-6 shadow-[0_8px_24px_rgba(90,70,40,0.08)]">
+              <h2 className="font-serif text-lg font-semibold text-[#2d2218]">
+                How it works
+              </h2>
+              <p className="mt-3 text-[0.95rem] leading-6 text-[#6f665d]">
+                Upload a PDF, and our AI will break it down into key ideas.
+                Then start a voice conversation to explore the book — ask questions,
+                get summaries, and deepen your understanding.
+              </p>
             </div>
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function StepItem({
-  number,
-  title,
-  description,
-}: {
-  number: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#b8ab98] text-sm font-semibold text-[#5e5447]">
-        {number}
-      </div>
-
-      <div>
-        <p className="text-[1rem] font-semibold leading-5 text-[#3a3026]">
-          {title}
-        </p>
-        <p className="mt-1 text-[0.95rem] leading-5 text-[#7b7165]">
-          {description}
-        </p>
-      </div>
-    </div>
   );
 }

@@ -273,6 +273,36 @@ export const getBooks = async (clerkId?: string) => {
   }
 };
 
+export const searchBooks = async (query: string) => {
+  try {
+    await connectToDatabase();
+
+    const filter: any = {};
+
+    if (query) {
+      const escaped = escapeRegex(query);
+      const regex = { $regex: escaped, $options: "i" };
+      filter.$or = [{ title: regex }, { author: regex }];
+    }
+
+    const books = await Book.find(filter)
+      .select("_id clerkId title slug author persona coverImageBase64 fileSize totalSegments createdAt")
+      .lean()
+      .sort({ createdAt: -1 });
+
+    return {
+      success: true,
+      data: serializeData(books),
+    };
+  } catch (e) {
+    console.error("Error searching books:", e);
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Unknown error occurred",
+    };
+  }
+};
+
 export const getBookBySlug = async (slug: string) => {
   try {
     await connectToDatabase();

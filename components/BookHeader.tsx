@@ -8,15 +8,36 @@ interface BookHeaderProps {
   book: IBook;
   status: CallStatus;
   isActive: boolean;
+  duration: number;
+  maxSeconds: number;
+  limitError: string | null;
   onToggleMic: () => void;
 }
 
-const BookHeader = ({ book, status, isActive, onToggleMic }: BookHeaderProps) => {
+const STATUS_CONFIG: Record<CallStatus, { label: string; dotClass: string }> = {
+  idle: { label: "Ready", dotClass: "vapi-status-dot-ready" },
+  connecting: { label: "Connecting...", dotClass: "vapi-status-dot-connecting" },
+  starting: { label: "Starting...", dotClass: "vapi-status-dot-starting" },
+  listening: { label: "Listening", dotClass: "vapi-status-dot-listening" },
+  thinking: { label: "Thinking...", dotClass: "vapi-status-dot-thinking" },
+  speaking: { label: "Speaking", dotClass: "vapi-status-dot-speaking" },
+};
+
+const formatTime = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+};
+
+const BookHeader = ({ book, status, isActive, duration, maxSeconds, limitError, onToggleMic }: BookHeaderProps) => {
   const { title, author, coverURL, coverImageBase64, persona } = book;
   const coverSource = coverImageBase64 || coverURL || "";
   const voiceName = getVoice(persona).name;
 
   const isSpeakingOrThinking = status === "speaking" || status === "thinking";
+  const { label: statusLabel, dotClass } = STATUS_CONFIG[status];
+  const timeRemaining = maxSeconds - duration;
+  const isLowTime = timeRemaining <= 60 && isActive;
 
   return (
     <div className="vapi-header-card mt-6 rounded-[32px] border border-[#e3cfab] shadow-soft overflow-hidden">
@@ -35,7 +56,7 @@ const BookHeader = ({ book, status, isActive, onToggleMic }: BookHeaderProps) =>
         <div className="vapi-mic-wrapper">
           <button
             type="button"
-            className={`vapi-mic-btn ${isActive && isSpeakingOrThinking ? "relative" : ""}`}
+            className={`vapi-mic-btn ${isActive && isSpeakingOrThinking ? "relative" : ""} ${limitError && !isActive ? "opacity-60" : ""}`}
             aria-label="Toggle microphone"
             onClick={onToggleMic}
           >
@@ -61,14 +82,16 @@ const BookHeader = ({ book, status, isActive, onToggleMic }: BookHeaderProps) =>
 
         <div className="flex flex-wrap gap-3">
           <div className="vapi-status-indicator">
-            <span className="vapi-status-dot vapi-status-dot-ready" />
-            <span className="vapi-status-text">Ready</span>
+            <span className={`vapi-status-dot ${dotClass}`} />
+            <span className="vapi-status-text">{statusLabel}</span>
           </div>
           <div className="vapi-status-indicator">
             <span className="vapi-status-text">Voice: {voiceName}</span>
           </div>
-          <div className="vapi-status-indicator">
-            <span className="vapi-status-text">0:00/15:00</span>
+          <div className={`vapi-status-indicator ${isLowTime ? "border-red-300! bg-red-50!" : ""}`}>
+            <span className={`vapi-status-text ${isLowTime ? "text-red-600!" : ""}`}>
+              {formatTime(duration)}/{formatTime(maxSeconds)}
+            </span>
           </div>
         </div>
       </div>
