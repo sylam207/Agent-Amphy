@@ -2,13 +2,19 @@
 import Hero from "@/components/Hero";
 import BookCard from "@/components/BookCard";
 import { searchBooks } from "@/lib/actions/books.actions";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 
-
-
 const Page = () => {
+  return (
+    <Suspense fallback={<div className="wrapper container"><Hero /><div>Loading...</div></div>}>
+      <PageContent />
+    </Suspense>
+  );
+};
+
+const PageContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get("query") || "";
@@ -109,3 +115,4 @@ const Page = () => {
 };
 
 export default Page;
+
