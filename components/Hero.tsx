@@ -7,29 +7,30 @@ import { Plus } from "lucide-react";
 export default function PokemonLibraryHero() {
   return (
     <section className="w-full pt-20 md:pt-24 sm:pt-28 mb-5 md:mb-5">
-      <div className="mx-auto w-full rounded-[5.5px] border border-[#decfb2] bg-[#e8dcc4] px-6 py-6 md:px-8 md:py-8">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mx-auto w-full rounded-[5.5px] border border-[#decfb2] bg-[#e8dcc4] px-5 py-6 sm:px-6 md:px-8 md:py-8">
+        {/* Top row: text + illustration on large screens */}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           {/* Left */}
           <div className="w-full lg:max-w-90">
-            <h1 className="font-serif text-[2.3rem] font-semibold leading-tight text-[#2d2218] md:text-[2.5rem]">
+            <h1 className="font-serif text-[1.8rem] font-semibold leading-tight text-[#2d2218] sm:text-[2.1rem] md:text-[2.5rem]">
               The Pokédex 
             </h1>
 
-            <p className="mt-4 max-w-105 text-[1rem] leading-7 text-[#6f665d]">
+            <p className="mt-3 max-w-105 text-[0.95rem] leading-7 text-[#6f665d] sm:mt-4 sm:text-[1rem]">
               Every great Trainer studies before battle. Upload your books,
               let AI break them down, and chat your way to mastery — one conversation at a time.
             </p>
 
             <Link href="/books/new">
-              <button className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-[1.05rem] font-semibold text-[#3a2d20] shadow-[0_4px_14px_rgba(80,62,35,0.08)] transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(80,62,35,0.12)]">
+              <button className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-[0.95rem] font-semibold text-[#3a2d20] shadow-[0_4px_14px_rgba(80,62,35,0.08)] transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(80,62,35,0.12)] sm:mt-6 sm:text-[1.05rem]">
                 <Plus className="h-5 w-5" />
                 Add new book
               </button>
             </Link>
           </div>
 
-          {/* Center */}
-          <div className="flex w-full flex-1 justify-center">
+          {/* Center - illustration: hidden on small screens, visible from md */}
+          <div className="hidden md:flex w-full flex-1 justify-center">
             <div className="relative h-65 w-full max-w-[320px]">
               {/* Soft background glow */}
               <div className="absolute left-1/2 top-[4.5px] h-[37.5px] w-16.5 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,242,181,0.95)_0%,rgba(255,231,143,0.55)_35%,rgba(255,214,102,0.18)_60%,transparent_82%)] blur-md" />
@@ -112,9 +113,9 @@ export default function PokemonLibraryHero() {
             </div>
           </div>
 
-          {/* Right */}
-          <div className="w-full lg:w-1/4">
-            <div className="mx-auto w-full max-w-75 rounded-3xl bg-white px-6 py-6 shadow-[0_8px_24px_rgba(90,70,40,0.08)]">
+          {/* Right - "How it works" card */}
+          <div className="w-full md:w-auto lg:w-1/4">
+            <div className="mx-auto w-full max-w-none rounded-3xl bg-white px-5 py-5 shadow-[0_8px_24px_rgba(90,70,40,0.08)] sm:px-6 sm:py-6 md:max-w-75">
               <h2 className="font-serif text-lg font-semibold text-[#2d2218]">
                 How it works
               </h2>

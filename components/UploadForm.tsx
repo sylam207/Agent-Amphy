@@ -16,7 +16,7 @@ interface UploadFormProps {
   clerkId: string;
   onSubmittingChange?: (submitting: boolean) => void;
 }
-// Helper function to safely convert large files to base64 without stack overflow
+
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -103,19 +103,15 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
     updateSubmitting(true);
     let step = "init";
     try {
-      // Get cover image (either provided or generated from PDF)
       step = "prepare-cover";
       let coverImageBase64: string;
       if (values.coverImage) {
-        // Convert provided cover image to base64
         const coverBase64 = await fileToBase64(values.coverImage);
         coverImageBase64 = `data:${values.coverImage.type};base64,${coverBase64}`;
       } else {
-        // Use PDF-generated cover
         coverImageBase64 = parsedPdfData.cover;
       }
 
-      // Resize cover if it's too large (> 500KB as data URL)
       if (coverImageBase64.length > 500_000) {
         console.log(`Cover image is large (${(coverImageBase64.length / 1024).toFixed(0)}KB), resizing...`);
         const img = new Image();
@@ -138,7 +134,6 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         console.log(`Cover resized to ${(coverImageBase64.length / 1024).toFixed(0)}KB`);
       }
 
-      // Upload PDF via chunked API route (avoids RSC serialization limits)
       step = "read-pdf";
       const pdfBase64 = await fileToBase64(values.pdfFile);
       console.log(`PDF base64 size: ${(pdfBase64.length / 1024 / 1024).toFixed(2)}MB`);
@@ -185,7 +180,6 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
 
       const { pdfFileId } = uploadResult.data;
 
-      // Create book in database with MongoDB storage
       step = "create-book";
       const bookData = {
         clerkId,
@@ -207,7 +201,6 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         throw new Error(bookResult.error || "Failed to create book");
       }
 
-      // Save book segments
       step = "save-segments";
       const segmentsPayload = JSON.stringify(parsedPdfData.content);
       console.log(`saveSegments payload size: ~${(segmentsPayload.length / 1024).toFixed(0)}KB, segments: ${parsedPdfData.content.length}`);
@@ -222,7 +215,6 @@ export const UploadForm = ({ clerkId, onSubmittingChange }: UploadFormProps) => 
         throw new Error(segmentsResult.error || "Failed to save book segments");
       }
 
-      // Redirect to book page
       router.push(`/books/${bookResult.data.slug}`);
 
     } catch (error: any) {

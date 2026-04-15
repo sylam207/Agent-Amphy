@@ -79,7 +79,7 @@ const PageContent = () => {
           Recent Books
         </h2>
         <div className="library-search-wrapper">
-          <Search className="ml-3 h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+          <Search className="ml-3 h-4 w-4 shrink-0 text-(--text-muted)" />
           <input
             type="text"
             placeholder="Search by title or author..."
@@ -93,7 +93,7 @@ const PageContent = () => {
         {loading ? (
           <div>Loading...</div>
         ) : books.length === 0 ? (
-          <div className="col-span-full text-center text-[var(--text-muted)] py-8">
+          <div className="col-span-full text-center text-(--text-muted) py-8">
             No books found.
           </div>
         ) : (

@@ -45,7 +45,6 @@ export const FileUploader = ({
       return;
     }
 
-    // Basic file validation
     if (accept === "application/pdf" && selectedFile.type !== "application/pdf") {
       setValidationError("Please upload a valid PDF file.");
       return;
@@ -56,7 +55,6 @@ export const FileUploader = ({
       return;
     }
 
-    // PDF-specific validation
     if (validatePdf && selectedFile.type === "application/pdf") {
       setIsValidating(true);
       try {

@@ -29,7 +29,6 @@ const VapiControls = ({ book }: { book: IBook }) => {
     }
   };
 
-  // Redirect to homepage when session time limit is hit and call has ended
   useEffect(() => {
     if (limitError && !isActive && duration >= maxSeconds) {
       const timeout = setTimeout(() => {

@@ -11,10 +11,8 @@ interface BookCardPropsWithDelete extends BookCardProps {
 }
 
 const BookCard = ({ title, author, coverURL, slug, _id, onDelete }: BookCardPropsWithDelete) => {
-    // Check if it's a base64 image (data URL)
     const isBase64 = coverURL?.startsWith('data:');
 
-    // Prevent navigation when clicking delete
     const handleDeleteClick = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
